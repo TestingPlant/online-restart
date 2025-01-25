@@ -20,7 +20,7 @@ async fn main() {
 async fn get_handler() -> Response {
     Response::builder()
         .status(307)
-        .header("Location", "https://hyperion-mc.github.io/hyperion")
+        .header("Location", "https://hyperion.rs")
         .body(Body::empty())
         .unwrap()
 }
