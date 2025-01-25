@@ -1,0 +1,7 @@
+#!/bin/bash
+
+while :; do
+	"$@"
+	echo "Process exited with status code $?, restarting in 5 seconds"
+	sleep 5
+done

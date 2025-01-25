@@ -6,13 +6,14 @@ git pull
 cargo build --bin tag --release
 cargo build --bin hyperion-proxy --release
 
+pkill -9 loop_run || true
 pkill -9 tag || true
 pkill -9 hyperion-proxy || true
 
 COMMIT="$(git log --pretty=format:'%H' -n 1)"
-echo "Restarting - new version: $COMMIT" >> tag_log
-echo "Restarting - new version: $COMMIT" >> proxy_log
+echo "Restarting - new version: $COMMIT" >> ../tag_log
+echo "Restarting - new version: $COMMIT" >> ../proxy_log
 
-./target/release/tag --ip 127.0.0.1 --port 25566 2>&1 >> tag_log &
-./target/release/hyperion-proxy --server 127.0.0.1:25566 [::]:25565 2>&1 >> proxy_log &
+../loop_run ./target/release/tag --ip 127.0.0.1 --port 25566 &>> ../tag_log &
+../loop_run ./target/release/hyperion-proxy --server 127.0.0.1:25566 [::]:25565 &>> ../proxy_log &
 disown -a
