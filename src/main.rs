@@ -28,7 +28,7 @@ async fn get_handler() -> Response {
 async fn post_handler(headers: HeaderMap) -> Response {
     if let Some(key) = headers.get("KEY") {
         if key.as_bytes() == include_str!("../secret").trim().as_bytes() {
-            restart().await;
+            tokio::spawn(restart());
             return Response::builder()
                 .status(200)
                 .body(Body::empty())
@@ -46,13 +46,12 @@ async fn restart() {
     eprintln!("acquiring restart lock");
     let _lock = RESTART_LOCK.lock().await;
     eprintln!("restarting");
-    let _ = Command::new("podman").arg("pull").arg("ghcr.io/hyperion-mc/hyperion/tag:latest").status().await;
-    let _ = Command::new("podman").arg("pull").arg("ghcr.io/hyperion-mc/hyperion/hyperion-proxy:latest").status().await;
-    let _ = Command::new("podman").arg("stop").arg("tag").status().await;
-    let _ = Command::new("podman").arg("stop").arg("proxy").status().await;
-    let _ = Command::new("podman").arg("rm").arg("tag").status().await;
-    let _ = Command::new("podman").arg("rm").arg("proxy").status().await;
-    let _ = Command::new("podman").arg("run").arg("-d").arg("--name").arg("tag").arg("--pod").arg("hyperion").arg("tag").status().await;
-    let _ = Command::new("podman").arg("run").arg("-d").arg("--name").arg("proxy").arg("--pod").arg("hyperion").arg("hyperion-proxy").arg("0.0.0.0:25565").arg("--server").arg("127.0.0.1:35565").status().await;
-    eprintln!("finished restart");
+    match Command::new("./restart").status().await {
+        Err(e) => eprintln!("RESTART FAILED: {e}"),
+        Ok(status) => match status.code() {
+            Some(0) => eprintln!("restart success"),
+            Some(e) => eprintln!("RESTART FAILED: exited with error code {e}"),
+            None => eprintln!("RESTART FAILED: terminated by signal")
+        }
+    }
 }
